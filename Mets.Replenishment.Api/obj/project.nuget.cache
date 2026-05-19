@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "LoWTuHhhkAA=",
+  "dgSpecHash": "utX2LBhcqnI=",
   "success": true,
   "projectFilePath": "C:\\Hitachi Project\\Mets.Replenishment.Api\\Mets.Replenishment.Api.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\bibin\\.nuget\\packages\\microsoft.aspnetcore.components.webassembly.server\\8.0.0\\microsoft.aspnetcore.components.webassembly.server.8.0.0.nupkg.sha512",
     "C:\\Users\\bibin\\.nuget\\packages\\microsoft.aspnetcore.openapi\\8.0.8\\microsoft.aspnetcore.openapi.8.0.8.nupkg.sha512",
     "C:\\Users\\bibin\\.nuget\\packages\\microsoft.entityframeworkcore\\8.0.0\\microsoft.entityframeworkcore.8.0.0.nupkg.sha512",
     "C:\\Users\\bibin\\.nuget\\packages\\microsoft.entityframeworkcore.abstractions\\8.0.0\\microsoft.entityframeworkcore.abstractions.8.0.0.nupkg.sha512",

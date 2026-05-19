@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.8" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
@@ -14,6 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Mets.Replenishment.Core\Mets.Replenishment.Core.csproj" />
     <ProjectReference Include="..\Mets.Replenishment.Infrastructure\Mets.Replenishment.Infrastructure.csproj" />
+    <ProjectReference Include="..\Mets.Replenishment.UI\Mets.Replenishment.UI.csproj" />
   </ItemGroup>
 
 </Project>
