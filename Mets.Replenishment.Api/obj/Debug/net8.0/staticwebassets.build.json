@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "2PRIEO+atTtf4YLz0oNtO5OcElIdLL9zuQ58pmuvSzQ=",
+  "Source": "Mets.Replenishment.Api",
+  "BasePath": "_content/Mets.Replenishment.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

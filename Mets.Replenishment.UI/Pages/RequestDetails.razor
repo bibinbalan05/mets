@@ -1,0 +1,223 @@
+@page "/request/{Id:guid}"
+@implements IDisposable
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+@if (_request == null)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    <MudGrid>
+        <MudItem xs="12" md="8">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h5">Request Details</MudText>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudChip T="string" Color="@GetStatusColor(_request.Status)">@_request.Status.ToString()</MudChip>
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText><b>Location:</b> @_request.Location</MudText>
+                    <MudText><b>Priority:</b> @_request.Priority</MudText>
+                    <MudText><b>Created At:</b> @_request.CreatedAt.ToString("g")</MudText>
+                    
+                    @if (_request.Status == RequestStatus.Rejected)
+                    {
+                        <MudAlert Severity="Severity.Error" Class="mt-2">Rejection Reason: @_request.RejectionReason</MudAlert>
+                    }
+
+                    @if (_request.ValidationStatus == ValidationStatus.Pending)
+                    {
+                        <MudAlert Severity="Severity.Info" Class="mt-2">
+                            <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="mr-2" />
+                            Validating stock availability... (Polling every 2 seconds)
+                        </MudAlert>
+                    }
+                    else if (_request.ValidationStatus == ValidationStatus.Completed)
+                    {
+                        <MudAlert Severity="Severity.Success" Class="mt-2">Stock validation completed.</MudAlert>
+                    }
+                    
+                    <MudTable Items="@_request.Items" Dense="true" Class="mt-4">
+                        <HeaderContent>
+                            <MudTh>Article Number</MudTh>
+                            <MudTh>Description</MudTh>
+                            <MudTh>Requested Qty</MudTh>
+                            <MudTh>Available Stock</MudTh>
+                            <MudTh>Fulfilled Qty</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Article Number">@context.ArticleNumber</MudTd>
+                            <MudTd DataLabel="Description">@context.Description</MudTd>
+                            <MudTd DataLabel="Requested Qty">@context.RequestedQuantity</MudTd>
+                            <MudTd DataLabel="Available Stock">
+                                @if(context.StockAvailable.HasValue)
+                                {
+                                    <MudChip T="string" Color="@(context.StockAvailable >= context.RequestedQuantity ? Color.Success : Color.Warning)" Size="Size.Small">
+                                        @context.StockAvailable
+                                    </MudChip>
+                                }
+                                else
+                                {
+                                    <MudText Typo="Typo.body2">-</MudText>
+                                }
+                            </MudTd>
+                            <MudTd DataLabel="Fulfilled Qty">
+                                @if (_request.Status == RequestStatus.Approved && _isFulfilling)
+                                {
+                                    <MudNumericField @bind-Value="context.FulfilledQuantity" Min="0" Max="@context.RequestedQuantity" HideSpinButtons="true" />
+                                }
+                                else
+                                {
+                                    @context.FulfilledQuantity
+                                }
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudCardContent>
+                <MudCardActions>
+                    @if (_request.Status == RequestStatus.Draft)
+                    {
+                        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SubmitRequest">Submit Request</MudButton>
+                    }
+                    
+                    @if (_request.Status == RequestStatus.Submitted && _request.ValidationStatus == ValidationStatus.Completed)
+                    {
+                        <MudButton Color="Color.Success" Variant="Variant.Filled" Class="mr-2" OnClick="ApproveRequest">Approve</MudButton>
+                        <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="RejectRequest">Reject</MudButton>
+                    }
+                    
+                    @if (_request.Status == RequestStatus.Approved)
+                    {
+                        if (!_isFulfilling)
+                        {
+                            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="() => _isFulfilling = true">Start Fulfillment</MudButton>
+                        }
+                        else
+                        {
+                            <MudButton Color="Color.Success" Variant="Variant.Filled" Class="mr-2" OnClick="SaveFulfillment">Complete Fulfillment</MudButton>
+                            <MudButton Color="Color.Default" Variant="Variant.Text" OnClick="() => _isFulfilling = false">Cancel</MudButton>
+                        }
+                    }
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private ReplenishmentRequest? _request;
+    private PeriodicTimer? _timer;
+    private bool _isFulfilling = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRequest();
+    }
+
+    private async Task LoadRequest()
+    {
+        _request = await Http.GetFromJsonAsync<ReplenishmentRequest>($"api/requests/{Id}");
+
+        if (_request?.ValidationStatus == ValidationStatus.Pending)
+        {
+            StartPolling();
+        }
+        else
+        {
+            StopPolling();
+        }
+    }
+
+    private void StartPolling()
+    {
+        if (_timer != null) return;
+        _timer = new PeriodicTimer(TimeSpan.FromSeconds(2));
+        _ = PollValidationStatus();
+    }
+
+    private void StopPolling()
+    {
+        _timer?.Dispose();
+        _timer = null;
+    }
+
+    private async Task PollValidationStatus()
+    {
+        while (_timer != null && await _timer.WaitForNextTickAsync())
+        {
+            await LoadRequest();
+            StateHasChanged();
+        }
+    }
+
+    private async Task SubmitRequest()
+    {
+        var response = await Http.PostAsync($"api/requests/{Id}/submit", null);
+        if (response.IsSuccessStatusCode)
+        {
+            Snackbar.Add("Request submitted. Validation in progress.", Severity.Info);
+            await LoadRequest();
+        }
+    }
+
+    private async Task ApproveRequest()
+    {
+        var response = await Http.PostAsync($"api/requests/{Id}/approve", null);
+        if (response.IsSuccessStatusCode)
+        {
+            Snackbar.Add("Request approved.", Severity.Success);
+            await LoadRequest();
+        }
+    }
+
+    private async Task RejectRequest()
+    {
+        // For simplicity, using a hardcoded reason, but in real app this would use a dialog
+        var payload = new { Reason = "Rejected by reviewer" };
+        var response = await Http.PostAsJsonAsync($"api/requests/{Id}/reject", payload);
+        if (response.IsSuccessStatusCode)
+        {
+            Snackbar.Add("Request rejected.", Severity.Error);
+            await LoadRequest();
+        }
+    }
+
+    private async Task SaveFulfillment()
+    {
+        var dict = _request!.Items.ToDictionary(i => i.Id, i => i.FulfilledQuantity);
+        var response = await Http.PostAsJsonAsync($"api/requests/{Id}/fulfill", dict);
+        if (response.IsSuccessStatusCode)
+        {
+            Snackbar.Add("Request fulfilled successfully.", Severity.Success);
+            _isFulfilling = false;
+            await LoadRequest();
+        }
+    }
+
+    private Color GetStatusColor(RequestStatus status)
+    {
+        return status switch
+        {
+            RequestStatus.Draft => Color.Default,
+            RequestStatus.Submitted => Color.Info,
+            RequestStatus.Approved => Color.Success,
+            RequestStatus.Rejected => Color.Error,
+            RequestStatus.Fulfilled => Color.Primary,
+            _ => Color.Default
+        };
+    }
+
+    public void Dispose()
+    {
+        StopPolling();
+    }
+}

@@ -1,0 +1,15 @@
+C:\Hitachi Project\Mets.Replenishment.Infrastructure\obj\Debug\net8.0\Mets.Replenishment.Infrastructure.csproj.AssemblyReference.cache
+C:\Hitachi Project\Mets.Replenishment.Infrastructure\obj\Debug\net8.0\Mets.Replenishment.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\Hitachi Project\Mets.Replenishment.Infrastructure\obj\Debug\net8.0\Mets.Replenishment.Infrastructure.AssemblyInfoInputs.cache
+C:\Hitachi Project\Mets.Replenishment.Infrastructure\obj\Debug\net8.0\Mets.Replenishment.Infrastructure.AssemblyInfo.cs
+C:\Hitachi Project\Mets.Replenishment.Infrastructure\obj\Debug\net8.0\Mets.Replenishment.Infrastructure.csproj.CoreCompileInputs.cache
+C:\Hitachi Project\Mets.Replenishment.Infrastructure\bin\Debug\net8.0\Mets.Replenishment.Infrastructure.deps.json
+C:\Hitachi Project\Mets.Replenishment.Infrastructure\bin\Debug\net8.0\Mets.Replenishment.Infrastructure.dll
+C:\Hitachi Project\Mets.Replenishment.Infrastructure\bin\Debug\net8.0\Mets.Replenishment.Infrastructure.pdb
+C:\Hitachi Project\Mets.Replenishment.Infrastructure\bin\Debug\net8.0\Mets.Replenishment.Core.dll
+C:\Hitachi Project\Mets.Replenishment.Infrastructure\bin\Debug\net8.0\Mets.Replenishment.Core.pdb
+C:\Hitachi Project\Mets.Replenishment.Infrastructure\obj\Debug\net8.0\Mets.Rep.53869CBF.Up2Date
+C:\Hitachi Project\Mets.Replenishment.Infrastructure\obj\Debug\net8.0\Mets.Replenishment.Infrastructure.dll
+C:\Hitachi Project\Mets.Replenishment.Infrastructure\obj\Debug\net8.0\refint\Mets.Replenishment.Infrastructure.dll
+C:\Hitachi Project\Mets.Replenishment.Infrastructure\obj\Debug\net8.0\Mets.Replenishment.Infrastructure.pdb
+C:\Hitachi Project\Mets.Replenishment.Infrastructure\obj\Debug\net8.0\ref\Mets.Replenishment.Infrastructure.dll

@@ -1,0 +1,31 @@
+@inherits LayoutComponentBase
+
+<MudThemeProvider Theme="_theme" IsDarkMode="true" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Color="Color.Primary">
+        <MudIcon Icon="@Icons.Material.Filled.Factory" Class="mr-3" />
+        <MudText Typo="Typo.h6">METS</MudText>
+        <MudSpacer />
+        <MudButton Href="/" Color="Color.Inherit">Dashboard</MudButton>
+        <MudButton Href="/request/new" Color="Color.Inherit">New Request</MudButton>
+    </MudAppBar>
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-4 pt-4">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private MudTheme _theme = new MudTheme()
+    {
+        PaletteDark = new PaletteDark()
+        {
+            Primary = Colors.Blue.Default,
+            AppbarBackground = Colors.Gray.Darken4
+        }
+    };
+}

@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\buildMultiTargeting\Mets.Replenishment.UI.props" />
+</Project>

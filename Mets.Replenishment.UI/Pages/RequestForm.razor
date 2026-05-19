@@ -1,0 +1,85 @@
+@page "/request/new"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<MudText Typo="Typo.h4" GutterBottom="true">Create Replenishment Request</MudText>
+
+<MudPaper Class="pa-4">
+    <MudForm @ref="_form" @bind-IsValid="@_success">
+        <MudTextField @bind-Value="_request.Location" Label="Location" Required="true" RequiredError="Location is required!" />
+        <MudSelect @bind-Value="_request.Priority" Label="Priority" Required="true">
+            @foreach (RequestPriority item in Enum.GetValues(typeof(RequestPriority)))
+            {
+                <MudSelectItem Value="@item">@item.ToString()</MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudText Typo="Typo.h6" Class="mt-4">Items</MudText>
+        
+        <MudTable Items="@_request.Items" Dense="true" Hover="true" Class="mb-4">
+            <HeaderContent>
+                <MudTh>Article Number</MudTh>
+                <MudTh>Description</MudTh>
+                <MudTh>Quantity</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Article Number">
+                    <MudTextField @bind-Value="context.ArticleNumber" Required="true" />
+                </MudTd>
+                <MudTd DataLabel="Description">
+                    <MudTextField @bind-Value="context.Description" Required="true" />
+                </MudTd>
+                <MudTd DataLabel="Quantity">
+                    <MudNumericField @bind-Value="context.RequestedQuantity" Required="true" Min="1" />
+                </MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => RemoveItem(context))" />
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="AddItem" Class="mb-4">Add Item</MudButton>
+        <br />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!_success)" OnClick="SaveDraft">Save Draft</MudButton>
+    </MudForm>
+</MudPaper>
+
+@code {
+    private MudForm _form = null!;
+    private bool _success;
+    private ReplenishmentRequest _request = new ReplenishmentRequest
+    {
+        Items = new List<ReplenishmentRequestItem> { new ReplenishmentRequestItem() }
+    };
+
+    private void AddItem()
+    {
+        _request.Items.Add(new ReplenishmentRequestItem());
+    }
+
+    private void RemoveItem(ReplenishmentRequestItem item)
+    {
+        _request.Items.Remove(item);
+    }
+
+    private async Task SaveDraft()
+    {
+        await _form.Validate();
+        if (_form.IsValid)
+        {
+            var response = await Http.PostAsJsonAsync("api/requests", _request);
+            if (response.IsSuccessStatusCode)
+            {
+                var created = await response.Content.ReadFromJsonAsync<ReplenishmentRequest>();
+                Snackbar.Add("Draft created successfully", Severity.Success);
+                if (created != null) Navigation.NavigateTo($"/request/{created.Id}");
+            }
+            else
+            {
+                Snackbar.Add("Failed to create draft", Severity.Error);
+            }
+        }
+    }
+}
