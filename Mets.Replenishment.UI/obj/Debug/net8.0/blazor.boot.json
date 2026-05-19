@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "Mets.Replenishment.UI",
   "resources": {
-    "hash": "sha256-M4GcO2r7cyTAMtGzXNIvZ9qXgaqITZdj/ZR4Dz8cg4k=",
+    "hash": "sha256-rm7b/j23XYf4LXuShQeeBBSkYgk2gczkzUQlliT8o60=",
     "jsModuleNative": {
       "dotnet.native.8.0.8.6wdujjjjrw.js": "sha256-juC5sA7gHTLXFEhAKgdM2/RavswpwCtDfjYGsAz2FXg="
     },
@@ -211,12 +211,12 @@
       "mscorlib.wasm": "sha256-Gz8PyW2/fwihe5ul81OwmRUrU71r+KtbyRw6xlOGD+Q=",
       "netstandard.wasm": "sha256-jMTqIQzoDS810lyhZpMO5eEC36EzntXqSVn+2qwkOMQ=",
       "System.Private.CoreLib.wasm": "sha256-NFj5WE5VLP2LptZIRJCUIc1AMk06FmxpsSILfPISwAw=",
-      "Mets.Replenishment.Core.wasm": "sha256-fJbNqn38iesWr+Ml/DHk9UhykKi72ubdKFdqwClqrPA=",
-      "Mets.Replenishment.UI.wasm": "sha256-Q/tkEvrmdR3b6boEm2TYC5Lek9sRIwpsecNdp5HPwJ8="
+      "Mets.Replenishment.Core.wasm": "sha256-wzWB1CqXmmIRNy9d6w63PAkgLBiFxfP7wS2kvB13UF4=",
+      "Mets.Replenishment.UI.wasm": "sha256-TwF6p7E/Q4gp+7eTfnqrok3hGppLruwf6WygdNgT8aw="
     },
     "pdb": {
-      "Mets.Replenishment.Core.pdb": "sha256-IhTelOqu4DEZw/xb2APCYAZzYTOZe1hi5re0dX8Mkc4=",
-      "Mets.Replenishment.UI.pdb": "sha256-wKAgQkaxLmGtJBvHa9UAqkGB3Cj2Vr6EIpkUanMafmI="
+      "Mets.Replenishment.Core.pdb": "sha256-cOmdycNTel5Nnuq9C0DXxQ+0keUjMbryPnnxQLhhjSA=",
+      "Mets.Replenishment.UI.pdb": "sha256-p/EG95Jv4B5twIAYyisWjOqw2prpBTsbFNOBQQZFGhk="
     }
   },
   "cacheBootResources": true,
