@@ -46,7 +46,8 @@ public class RequestsController : ControllerBase
             var validationResult = await validator.ValidateAsync(request);
             if (!validationResult.IsValid)
             {
-                _logger.LogWarning("Request creation validation failed with {ErrorCount} errors", validationResult.Errors.Count);
+                var errors = validationResult.Errors.Select(e => new { e.PropertyName, e.ErrorMessage });
+                _logger.LogWarning("Request creation validation failed with {ErrorCount} errors: {Errors}", validationResult.Errors.Count, errors);
                 return BadRequest(validationResult.ToDictionary());
             }
         }
@@ -63,9 +64,19 @@ public class RequestsController : ControllerBase
     }
 
     [HttpPost("{id}/approve")]
-    public async Task<IActionResult> ApproveRequest(Guid id, [FromQuery] string? reviewerName = null)
+    public async Task<IActionResult> ApproveRequest(Guid id, [FromBody] ApproveRequestDto payload, [FromServices] IValidator<ApproveRequestDto>? validator = null)
     {
-        var request = await _replenishmentService.ApproveRequestAsync(id, reviewerName);
+        if (validator != null)
+        {
+            var validationResult = await validator.ValidateAsync(payload);
+            if (!validationResult.IsValid)
+            {
+                _logger.LogWarning("Approve request validation failed for request {RequestId} with {ErrorCount} errors", id, validationResult.Errors.Count);
+                return BadRequest(validationResult.ToDictionary());
+            }
+        }
+
+        var request = await _replenishmentService.ApproveRequestAsync(id, payload.ReviewerName);
         return Ok(request);
     }
 
@@ -87,9 +98,19 @@ public class RequestsController : ControllerBase
     }
 
     [HttpPost("{id}/fulfill")]
-    public async Task<IActionResult> FulfillRequest(Guid id, [FromBody] Dictionary<Guid, int> fulfilledQuantities)
+    public async Task<IActionResult> FulfillRequest(Guid id, [FromBody] FulfillRequestDto payload, [FromServices] IValidator<FulfillRequestDto>? validator = null)
     {
-        var request = await _replenishmentService.FulfillRequestAsync(id, fulfilledQuantities);
+        if (validator != null)
+        {
+            var validationResult = await validator.ValidateAsync(payload);
+            if (!validationResult.IsValid)
+            {
+                _logger.LogWarning("Fulfill request validation failed for request {RequestId} with {ErrorCount} errors", id, validationResult.Errors.Count);
+                return BadRequest(validationResult.ToDictionary());
+            }
+        }
+
+        var request = await _replenishmentService.FulfillRequestAsync(id, payload.FulfilledQuantities);
         return Ok(request);
     }
 }

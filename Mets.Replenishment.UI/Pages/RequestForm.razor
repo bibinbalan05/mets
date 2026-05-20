@@ -8,6 +8,15 @@
 <MudPaper Class="pa-4">
     <MudForm @ref="_form" @bind-IsValid="@_success">
 
+        <MudGrid>
+            <MudItem xs="6">
+                <MudTextField @bind-Value="_request.CreatedBy" Label="Worker Name" Required="true" MaxLength="100" Validation="@(new Func<string, string?>(ValidateCreatedBy))" />
+            </MudItem>
+            <MudItem xs="6">
+                <MudTextField @bind-Value="_request.Location" Label="Location" Required="true" MaxLength="100" Validation="@(new Func<string, string?>(ValidateLocation))" />
+            </MudItem>
+        </MudGrid>
+
         <MudSelect @bind-Value="_request.Priority" Label="Priority" Required="true">
             @foreach (RequestPriority item in Enum.GetValues(typeof(RequestPriority)))
             {
@@ -31,9 +40,14 @@
             var item = _request.Items[i];
             <MudPaper @key="item" Class="pa-2 mb-1" Outlined="true">
                 <MudGrid>
-<MudTextField @bind-Value="item.ArticleNumber" Label="Article #" Required="true" MaxLength="50" Margin="Margin.Dense" />
-                        <MudTextField @bind-Value="item.Description" Label="Description" Required="true" MaxLength="200" Margin="Margin.Dense" />
-                        <MudNumericField @bind-Value="item.RequestedQuantity" Label="Qty" Required="true" Min="1" Max="1000" Margin="Margin.Dense" />
+                    <MudItem xs="3">
+                        <MudTextField @bind-Value="item.ArticleNumber" Label="Article #" Required="true" MaxLength="50" Margin="Margin.Dense" Validation="@(new Func<string, string?>(ValidateArticleNumber))" />
+                    </MudItem>
+                    <MudItem xs="4">
+                        <MudTextField @bind-Value="item.Description" Label="Description" Required="true" MaxLength="200" Margin="Margin.Dense" Validation="@(new Func<string, string?>(ValidateDescription))" />
+                    </MudItem>
+                    <MudItem xs="3">
+                        <MudNumericField @bind-Value="item.RequestedQuantity" Label="Qty" Required="true" Min="1" Max="1000" Margin="Margin.Dense" Validation="@(new Func<int?, string?>(ValidateRequestedQuantity))" />
                     </MudItem>
                     <MudItem xs="2">
                         <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
@@ -41,6 +55,11 @@
                     </MudItem>
                 </MudGrid>
             </MudPaper>
+        }
+
+        @if (_request.Items.Count == 0)
+        {
+            <MudText Color="Color.Error" Typo="Typo.caption">At least one replenishment item must be requested.</MudText>
         }
 
         <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2 mb-4" Spacing="2">
@@ -88,11 +107,62 @@
         StateHasChanged();
     }
 
+    private string? ValidateCreatedBy(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return "Worker Name is required.";
+        if (value.Length > 100)
+            return "Worker name cannot exceed 100 characters.";
+        return null;
+    }
+
+    private string? ValidateLocation(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return "Location is required.";
+        if (value.Length > 100)
+            return "Location cannot exceed 100 characters.";
+        return null;
+    }
+
+    private string? ValidateArticleNumber(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return "Article number is required.";
+        if (!value.StartsWith("ART-"))
+            return "Article number must start with 'ART-'.";
+        if (value.Length > 50)
+            return "Article number cannot exceed 50 characters.";
+        return null;
+    }
+
+    private string? ValidateDescription(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return "Description is required.";
+        if (value.Length > 200)
+            return "Description cannot exceed 200 characters.";
+        return null;
+    }
+
+    private string? ValidateRequestedQuantity(int? value)
+    {
+        if (!value.HasValue || value.Value <= 0)
+            return "Requested quantity must be greater than 0.";
+        return null;
+    }
+
     private async Task SaveDraft()
     {
         await _form.ValidateAsync();
         if (_form.IsValid)
         {
+            if (_request.Items.Count == 0)
+            {
+                Snackbar.Add("At least one replenishment item must be requested.", Severity.Error);
+                return;
+            }
+
             var response = await Http.PostAsJsonAsync("api/requests", _request);
             if (response.IsSuccessStatusCode)
             {
@@ -102,7 +172,16 @@
             }
             else
             {
-                Snackbar.Add("Failed to create draft", Severity.Error);
+                var errors = await response.Content.ReadFromJsonAsync<Dictionary<string, string[]>>();
+                if (errors?.Any() == true)
+                {
+                    var message = string.Join(" ", errors.SelectMany(kvp => kvp.Value));
+                    Snackbar.Add($"Failed to create draft: {message}", Severity.Error);
+                }
+                else
+                {
+                    Snackbar.Add("Failed to create draft", Severity.Error);
+                }
             }
         }
     }
