@@ -107,7 +107,7 @@ public class RequestsControllerTests
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _controller.ApproveRequest(request.Id, "Reviewer Sarah");
+        var result = await _controller.ApproveRequest(request.Id, new ApproveRequestDto { ReviewerName = "Reviewer Sarah" });
 
         // Assert
         Assert.That(result, Is.InstanceOf<OkObjectResult>());
@@ -131,7 +131,7 @@ public class RequestsControllerTests
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        Assert.ThrowsAsync<InvalidOperationException>(async () => await _controller.ApproveRequest(request.Id));
+        Assert.ThrowsAsync<InvalidOperationException>(async () => await _controller.ApproveRequest(request.Id, new ApproveRequestDto { ReviewerName = "Reviewer Sarah" }));
     }
 
     [Test]
