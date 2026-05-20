@@ -18,29 +18,17 @@ Getting started
 
  git clone <repo-url>
 
-2. Restore dependencies
+2. Restore dependencies : dotnet restore
 
- dotnet restore
-
-3. Build the solution
-
- dotnet build
+3. Build the solution : dotnet build
 
 Running the applications
 
-- API
- - Change directory to `Mets.Replenishment.Api` and run:
-
- dotnet run
+ - Change directory to `Mets.Replenishment.Api` and run: dotnet run
 
  - The API will start and listen on the configured URLs (see `appsettings.json` or environment variables).
-
- dotnet run
-
  - Open the URL reported in the console (typically `http://localhost:5005` or another port) in your browser. 
 
 Tests
 
-- Run all tests from the solution root:
-
- dotnet test
+- Run all tests from the solution root: dotnet test
