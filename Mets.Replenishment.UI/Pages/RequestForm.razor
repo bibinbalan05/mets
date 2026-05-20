@@ -7,7 +7,7 @@
 
 <MudPaper Class="pa-4">
     <MudForm @ref="_form" @bind-IsValid="@_success">
-        <MudTextField @bind-Value="_request.Location" Label="Location" Required="true" RequiredError="Location is required!" />
+
         <MudSelect @bind-Value="_request.Priority" Label="Priority" Required="true">
             @foreach (RequestPriority item in Enum.GetValues(typeof(RequestPriority)))
             {
@@ -16,31 +16,48 @@
         </MudSelect>
 
         <MudText Typo="Typo.h6" Class="mt-4">Items</MudText>
-        
-        <MudTable Items="@_request.Items" Dense="true" Hover="true" Class="mb-4">
-            <HeaderContent>
-                <MudTh>Article Number</MudTh>
-                <MudTh>Description</MudTh>
-                <MudTh>Quantity</MudTh>
-                <MudTh>Actions</MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd DataLabel="Article Number">
-                    <MudTextField @bind-Value="context.ArticleNumber" Required="true" />
-                </MudTd>
-                <MudTd DataLabel="Description">
-                    <MudTextField @bind-Value="context.Description" Required="true" />
-                </MudTd>
-                <MudTd DataLabel="Quantity">
-                    <MudNumericField @bind-Value="context.RequestedQuantity" Required="true" Min="1" />
-                </MudTd>
-                <MudTd>
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => RemoveItem(context))" />
-                </MudTd>
-            </RowTemplate>
-        </MudTable>
 
-        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="AddItem" Class="mb-4">Add Item</MudButton>
+        <MudPaper Class="pa-2 mb-2" Outlined="true">
+            <MudGrid>
+                <MudItem xs="3"><MudText Typo="Typo.subtitle2" Class="pa-1">Article Number</MudText></MudItem>
+                <MudItem xs="4"><MudText Typo="Typo.subtitle2" Class="pa-1">Description</MudText></MudItem>
+                <MudItem xs="3"><MudText Typo="Typo.subtitle2" Class="pa-1">Quantity</MudText></MudItem>
+                <MudItem xs="2"><MudText Typo="Typo.subtitle2" Class="pa-1">Actions</MudText></MudItem>
+            </MudGrid>
+        </MudPaper>
+
+        @for (int i = 0; i < _request.Items.Count; i++)
+        {
+            var item = _request.Items[i];
+            <MudPaper @key="item" Class="pa-2 mb-1" Outlined="true">
+                <MudGrid>
+<MudTextField @bind-Value="item.ArticleNumber" Label="Article #" Required="true" MaxLength="50" Margin="Margin.Dense" />
+                        <MudTextField @bind-Value="item.Description" Label="Description" Required="true" MaxLength="200" Margin="Margin.Dense" />
+                        <MudNumericField @bind-Value="item.RequestedQuantity" Label="Qty" Required="true" Min="1" Max="1000" Margin="Margin.Dense" />
+                    </MudItem>
+                    <MudItem xs="2">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                       OnClick="@(() => RemoveItem(item))" />
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+        }
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2 mb-4" Spacing="2">
+            <MudButton Variant="Variant.Outlined" Color="Color.Secondary"
+                       OnClick="AddItem"
+                       Disabled="@(_request.Items.Count >= 10)">
+                Add Item
+            </MudButton>
+            @if (_request.Items.Count >= 10)
+            {
+                <MudText Typo="Typo.caption" Color="Color.Warning">Maximum of 10 items reached.</MudText>
+            }
+            else
+            {
+                <MudText Typo="Typo.caption" Color="Color.Default">@(_request.Items.Count)/10 items</MudText>
+            }
+        </MudStack>
         <br />
         <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!_success)" OnClick="SaveDraft">Save Draft</MudButton>
     </MudForm>
@@ -56,17 +73,24 @@
 
     private void AddItem()
     {
+        if (_request.Items.Count >= 10)
+        {
+            Snackbar.Add("You can add a maximum of 10 items per request.", Severity.Warning);
+            return;
+        }
         _request.Items.Add(new ReplenishmentRequestItem());
+        StateHasChanged();
     }
 
     private void RemoveItem(ReplenishmentRequestItem item)
     {
         _request.Items.Remove(item);
+        StateHasChanged();
     }
 
     private async Task SaveDraft()
     {
-        await _form.Validate();
+        await _form.ValidateAsync();
         if (_form.IsValid)
         {
             var response = await Http.PostAsJsonAsync("api/requests", _request);

@@ -2,10 +2,11 @@ using System;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using Mets.Replenishment.Core.Interfaces;
 
-namespace Mets.Replenishment.Api.Background;
+namespace Mets.Replenishment.Infrastructure.Services;
 
-public class ValidationJobQueue
+public class ValidationJobQueue : IValidationJobQueue
 {
     private readonly Channel<Guid> _queue;
 

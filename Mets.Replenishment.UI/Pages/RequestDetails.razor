@@ -6,7 +6,9 @@
 
 @if (_request == null)
 {
-    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    <div style="display: flex; align-items: center; justify-content: center; min-height: 400px; width: 100%;">
+        <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+    </div>
 }
 else
 {
@@ -23,6 +25,11 @@ else
                 </MudCardHeader>
                 <MudCardContent>
                     <MudText><b>Location:</b> @_request.Location</MudText>
+                    <MudText><b>Created By:</b> @_request.CreatedBy</MudText>
+                    @if (!string.IsNullOrEmpty(_request.ReviewedBy))
+                    {
+                        <MudText><b>Reviewed By:</b> @_request.ReviewedBy</MudText>
+                    }
                     <MudText><b>Priority:</b> @_request.Priority</MudText>
                     <MudText><b>Created At:</b> @_request.CreatedAt.ToString("g")</MudText>
                     
@@ -79,17 +86,24 @@ else
                             </MudTd>
                         </RowTemplate>
                     </MudTable>
+
+                    @if (_request.Status == RequestStatus.Submitted && _request.ValidationStatus == ValidationStatus.Completed)
+                    {
+                        <MudCard Class="pa-4 mt-4" Outlined="true">
+                            <MudText Typo="Typo.h6" Class="mb-2">Review Request (Reviewer)</MudText>
+                            <MudTextField @bind-Value="_reviewerName" Label="Reviewer Name" Required="true" RequiredError="Reviewer name is required" Class="mb-2" />
+                            <MudTextField @bind-Value="_rejectionReason" Label="Rejection Reason (Required only if rejecting)" Class="mb-3" />
+                            <MudStack Row="true">
+                                <MudButton Color="Color.Success" Variant="Variant.Filled" Disabled="@string.IsNullOrWhiteSpace(_reviewerName)" OnClick="ApproveRequest">Approve</MudButton>
+                                <MudButton Color="Color.Error" Variant="Variant.Filled" Disabled="@(string.IsNullOrWhiteSpace(_reviewerName) || string.IsNullOrWhiteSpace(_rejectionReason))" OnClick="RejectRequest">Reject</MudButton>
+                            </MudStack>
+                        </MudCard>
+                    }
                 </MudCardContent>
                 <MudCardActions>
                     @if (_request.Status == RequestStatus.Draft)
                     {
                         <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SubmitRequest">Submit Request</MudButton>
-                    }
-                    
-                    @if (_request.Status == RequestStatus.Submitted && _request.ValidationStatus == ValidationStatus.Completed)
-                    {
-                        <MudButton Color="Color.Success" Variant="Variant.Filled" Class="mr-2" OnClick="ApproveRequest">Approve</MudButton>
-                        <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="RejectRequest">Reject</MudButton>
                     }
                     
                     @if (_request.Status == RequestStatus.Approved)
@@ -117,6 +131,8 @@ else
     private ReplenishmentRequest? _request;
     private PeriodicTimer? _timer;
     private bool _isFulfilling = false;
+    private string _reviewerName = string.Empty;
+    private string _rejectionReason = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -171,7 +187,10 @@ else
 
     private async Task ApproveRequest()
     {
-        var response = await Http.PostAsync($"api/requests/{Id}/approve", null);
+        if (string.IsNullOrWhiteSpace(_reviewerName)) return;
+
+        var url = $"api/requests/{Id}/approve?reviewerName={Uri.EscapeDataString(_reviewerName)}";
+        var response = await Http.PostAsync(url, null);
         if (response.IsSuccessStatusCode)
         {
             Snackbar.Add("Request approved.", Severity.Success);
@@ -181,8 +200,9 @@ else
 
     private async Task RejectRequest()
     {
-        // For simplicity, using a hardcoded reason, but in real app this would use a dialog
-        var payload = new { Reason = "Rejected by reviewer" };
+        if (string.IsNullOrWhiteSpace(_reviewerName) || string.IsNullOrWhiteSpace(_rejectionReason)) return;
+
+        var payload = new { Reason = _rejectionReason, ReviewerName = _reviewerName };
         var response = await Http.PostAsJsonAsync($"api/requests/{Id}/reject", payload);
         if (response.IsSuccessStatusCode)
         {

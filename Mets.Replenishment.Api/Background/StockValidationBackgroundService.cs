@@ -14,12 +14,12 @@ namespace Mets.Replenishment.Api.Background;
 
 public class StockValidationBackgroundService : BackgroundService
 {
-    private readonly ValidationJobQueue _queue;
+    private readonly IValidationJobQueue _queue;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<StockValidationBackgroundService> _logger;
 
     public StockValidationBackgroundService(
-        ValidationJobQueue queue,
+        IValidationJobQueue queue,
         IServiceProvider serviceProvider,
         ILogger<StockValidationBackgroundService> logger)
     {

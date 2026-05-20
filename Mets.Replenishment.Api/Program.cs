@@ -4,15 +4,14 @@ using Mets.Replenishment.Infrastructure.Services;
 using Mets.Replenishment.Core.Interfaces;
 using Mets.Replenishment.Api.Background;
 using System.Text.Json.Serialization;
+using FluentValidation;
+using Mets.Replenishment.Core.Validators;
+using Mets.Replenishment.Api.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers()
-    .AddJsonOptions(options => 
-    {
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
+builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -21,8 +20,11 @@ builder.Services.AddDbContext<ReplenishmentDbContext>(options =>
     options.UseInMemoryDatabase("MetsReplenishmentDb"));
 
 builder.Services.AddScoped<IStockValidationService, MockStockValidationService>();
-builder.Services.AddSingleton<ValidationJobQueue>();
+builder.Services.AddSingleton<IValidationJobQueue, ValidationJobQueue>();
+builder.Services.AddScoped<IReplenishmentService, ReplenishmentService>();
 builder.Services.AddHostedService<StockValidationBackgroundService>();
+
+builder.Services.AddValidatorsFromAssemblyContaining<ReplenishmentRequestValidator>();
 
 // CORS for Blazor WASM
 builder.Services.AddCors(options =>
@@ -34,6 +36,8 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 // Seed Data
 using (var scope = app.Services.CreateScope())
