@@ -2,15 +2,15 @@
 
 Repository structure
 
-- `Mets.Replenishment.Api` — ASP.NET Core Web API project that exposes the backend endpoints.
-- `Mets.Replenishment.UI` — Blazor WebAssembly (WASM) frontend.
-- `Mets.Replenishment.Core` — Core domain models and interfaces.
-- `Mets.Replenishment.Infrastructure` — Data access, repository implementations and integrations.
-- `Mets.Replenishment.Tests` — Unit and integration tests.
+- `Mets.Replenishment.Api` ï¿½ ASP.NET Core Web API project that exposes the backend endpoints.
+- `Mets.Replenishment.UI` ï¿½ Blazor WebAssembly (WASM) frontend.
+- `Mets.Replenishment.Core` ï¿½ Core domain models and interfaces.
+- `Mets.Replenishment.Infrastructure` ï¿½ Data access, repository implementations and integrations.
+- `Mets.Replenishment.Tests` ï¿½ Unit and integration tests.
 
 Prerequisites
 
-- .NET8 SDK 
+- .NET10 SDK 
 
 Getting started
 
