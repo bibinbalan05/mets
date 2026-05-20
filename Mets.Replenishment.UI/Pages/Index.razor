@@ -1,18 +1,12 @@
 @page "/"
 @inject HttpClient Http
 @inject NavigationManager Navigation
+@using MudBlazor
+@using Mets.Replenishment.UI.Models
 
 <MudText Typo="Typo.h4" GutterBottom="true">Stock Replenishment Requests</MudText>
 
-@if (_requests == null)
-{
-    <div style="display: flex; align-items: center; justify-content: center; min-height: 400px; width: 100%;">
-        <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
-    </div>
-}
-else
-{
-    <MudDataGrid Items="@_requests" Filterable="true" SortMode="SortMode.Multiple" Groupable="true" T="ReplenishmentRequest">
+<MudDataGrid ServerData="LoadServerData" Filterable="true" SortMode="SortMode.Multiple" Groupable="true" T="ReplenishmentRequest">
         <Columns>
             <PropertyColumn Property="x => x.Id" Title="ID" />
             <PropertyColumn Property="x => x.Location" Title="Location" />
@@ -47,14 +41,40 @@ else
             <MudDataGridPager T="ReplenishmentRequest" />
         </PagerContent>
     </MudDataGrid>
-}
 
 @code {
-    private List<ReplenishmentRequest>? _requests;
-
-    protected override async Task OnInitializedAsync()
+    private async Task<GridData<ReplenishmentRequest>> LoadServerData(GridState<ReplenishmentRequest> state, CancellationToken cancellationToken)
     {
-        _requests = await Http.GetFromJsonAsync<List<ReplenishmentRequest>>("api/requests");
+        var pageNumber = state.Page + 1; // Mud grid pages are zero-based
+        var pageSize = state.PageSize;
+        
+        string? status = null;
+        string? priority = null;
+        string? location = null;
+
+        foreach (var filter in state.FilterDefinitions)
+        {
+            if (filter.Value == null) continue;
+            
+            var field = filter.Column?.PropertyName;
+            var valueStr = filter.Value.ToString();
+            
+            if (field == nameof(ReplenishmentRequest.Status))
+                status = valueStr;
+            else if (field == nameof(ReplenishmentRequest.Priority))
+                priority = valueStr;
+            else if (field == nameof(ReplenishmentRequest.Location))
+                location = valueStr;
+        }
+
+        var uri = $"api/requests?pageNumber={pageNumber}&pageSize={pageSize}";
+        if (!string.IsNullOrEmpty(status)) uri += $"&status={Uri.EscapeDataString(status)}";
+        if (!string.IsNullOrEmpty(priority)) uri += $"&priority={Uri.EscapeDataString(priority)}";
+        if (!string.IsNullOrEmpty(location)) uri += $"&location={Uri.EscapeDataString(location)}";
+
+        var paged = await Http.GetFromJsonAsync<PagedResult<ReplenishmentRequest>>(uri, cancellationToken);
+        var items = paged?.Items?.ToList() ?? new List<ReplenishmentRequest>();
+        return new GridData<ReplenishmentRequest>() { Items = items, TotalItems = paged?.TotalCount ?? 0 };
     }
 
     private Color GetStatusColor(RequestStatus status)

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Mets.Replenishment.Core.Entities;
+using Mets.Replenishment.Core.DTOs;
 using Mets.Replenishment.Core.Enums;
 using Mets.Replenishment.Core.Interfaces;
 using Mets.Replenishment.Infrastructure.Data;
@@ -27,7 +28,7 @@ public class ReplenishmentService : IReplenishmentService
         _logger = logger;
     }
 
-    public async Task<IEnumerable<ReplenishmentRequest>> GetRequestsAsync(string? status, string? priority, string? location)
+    public async Task<PagedResult<ReplenishmentRequest>> GetRequestsAsync(string? status, string? priority, string? location, int pageNumber = 1, int pageSize = 20)
     {
         _logger.LogDebug("Retrieving requests. Filters - Status: {Status}, Priority: {Priority}, Location: {Location}", status, priority, location);
         
@@ -42,9 +43,26 @@ public class ReplenishmentService : IReplenishmentService
         if (!string.IsNullOrEmpty(location))
             query = query.Where(r => r.Location.Contains(location));
 
-        var results = await query.OrderByDescending(r => r.CreatedAt).ToListAsync();
-        _logger.LogInformation("Retrieved {Count} replenishment requests matching search criteria", results.Count);
-        return results;
+        var totalCount = await query.CountAsync();
+
+        pageNumber = pageNumber < 1 ? 1 : pageNumber;
+        pageSize = pageSize < 1 ? 20 : pageSize;
+
+        List<ReplenishmentRequest> items;
+        if (totalCount == 0 || (pageNumber - 1) > (totalCount - 1) / pageSize)
+        {
+            items = new List<ReplenishmentRequest>();
+        }
+        else
+        {
+            items = await query.OrderByDescending(r => r.CreatedAt)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+        }
+
+        _logger.LogInformation("Retrieved {Count} replenishment requests (page {PageNumber}/{PageSize}) matching search criteria", items.Count, pageNumber, pageSize);
+        return new PagedResult<ReplenishmentRequest>(items, totalCount, pageNumber, pageSize);
     }
 
     public async Task<ReplenishmentRequest?> GetRequestByIdAsync(Guid id)

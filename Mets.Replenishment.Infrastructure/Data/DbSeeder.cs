@@ -13,61 +13,56 @@ public static class DbSeeder
 
         if (context.Requests.Any()) return;
 
-        var req1Id = Guid.NewGuid();
-        var req2Id = Guid.NewGuid();
-        var req3Id = Guid.NewGuid();
+        var requests = new List<ReplenishmentRequest>();
+        var random = new Random(42);
+        
+        string[] locations = { "Station A1", "Station B2", "Station C3", "Station D4", "Warehouse West", "Storage Area 5" };
+        RequestPriority[] priorities = { RequestPriority.Low, RequestPriority.Normal, RequestPriority.Urgent };
+        RequestStatus[] statuses = { RequestStatus.Draft, RequestStatus.Submitted, RequestStatus.Approved, RequestStatus.Rejected, RequestStatus.Fulfilled };
+        string[] workers = { "Worker John", "Worker Bob", "Worker Alice", "Worker Charlie", "Worker Diana" };
+        string[] reviewers = { "Reviewer Sarah", "Reviewer Dave", "Reviewer James" };
 
-        var requests = new List<ReplenishmentRequest>
+        for (int i = 1; i <= 25; i++)
         {
-            new ReplenishmentRequest
+            var id = Guid.NewGuid();
+            var status = statuses[random.Next(statuses.Length)];
+            var priority = priorities[random.Next(priorities.Length)];
+            var location = locations[random.Next(locations.Length)] + $" (Row {i})";
+            var worker = workers[random.Next(workers.Length)];
+            var reviewer = (status != RequestStatus.Draft && status != RequestStatus.Submitted) ? reviewers[random.Next(reviewers.Length)] : null;
+            
+            var req = new ReplenishmentRequest
             {
-                Id = req1Id,
-                Location = "Station A1",
-                Priority = RequestPriority.Urgent,
-                Status = RequestStatus.Draft,
-                CreatedBy = "Worker John",
-                CreatedAt = DateTime.UtcNow.AddHours(-1),
-                UpdatedAt = DateTime.UtcNow.AddHours(-1),
+                Id = id,
+                Location = location,
+                Priority = priority,
+                Status = status,
+                CreatedBy = worker,
+                ReviewedBy = reviewer,
+                CreatedAt = DateTime.UtcNow.AddMinutes(-i * 45),
+                UpdatedAt = DateTime.UtcNow.AddMinutes(-i * 45),
+                ValidationStatus = status == RequestStatus.Draft ? ValidationStatus.NotStarted : ValidationStatus.Completed,
                 Items = new List<ReplenishmentRequestItem>
                 {
-                    new ReplenishmentRequestItem { RequestId = req1Id, ArticleNumber = "ART-100", Description = "Screws 5mm", RequestedQuantity = 500 },
-                    new ReplenishmentRequestItem { RequestId = req1Id, ArticleNumber = "ART-101", Description = "Metal Plates", RequestedQuantity = 100 }
+                    new ReplenishmentRequestItem 
+                    { 
+                        Id = Guid.NewGuid(),
+                        RequestId = id, 
+                        ArticleNumber = $"ART-{(100 + i)}", 
+                        Description = $"Seeded Item {i}", 
+                        RequestedQuantity = random.Next(10, 100), 
+                        StockAvailable = random.Next(10, 200) 
+                    }
                 }
-            },
-            new ReplenishmentRequest
+            };
+            
+            if (status != RequestStatus.Draft)
             {
-                Id = req2Id,
-                Location = "Station B2",
-                Priority = RequestPriority.Normal,
-                Status = RequestStatus.Submitted,
-                ValidationStatus = ValidationStatus.Completed,
-                CreatedBy = "Worker Bob",
-                CreatedAt = DateTime.UtcNow.AddDays(-1),
-                SubmittedAt = DateTime.UtcNow.AddHours(-20),
-                UpdatedAt = DateTime.UtcNow.AddHours(-20),
-                Items = new List<ReplenishmentRequestItem>
-                {
-                    new ReplenishmentRequestItem { RequestId = req2Id, ArticleNumber = "ART-205", Description = "Wiring Harness", RequestedQuantity = 50, StockAvailable = 150 }
-                }
-            },
-            new ReplenishmentRequest
-            {
-                Id = req3Id,
-                Location = "Station C3",
-                Priority = RequestPriority.Low,
-                Status = RequestStatus.Approved,
-                ValidationStatus = ValidationStatus.Completed,
-                CreatedBy = "Worker Alice",
-                ReviewedBy = "Reviewer Sarah",
-                CreatedAt = DateTime.UtcNow.AddDays(-2),
-                SubmittedAt = DateTime.UtcNow.AddDays(-1),
-                UpdatedAt = DateTime.UtcNow.AddDays(-1),
-                Items = new List<ReplenishmentRequestItem>
-                {
-                    new ReplenishmentRequestItem { RequestId = req3Id, ArticleNumber = "ART-300", Description = "Control Boards", RequestedQuantity = 20, StockAvailable = 25 }
-                }
+                req.SubmittedAt = req.CreatedAt.AddMinutes(10);
             }
-        };
+            
+            requests.Add(req);
+        }
 
         context.Requests.AddRange(requests);
         context.SaveChanges();

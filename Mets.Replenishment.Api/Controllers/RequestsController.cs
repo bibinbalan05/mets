@@ -24,9 +24,12 @@ public class RequestsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetRequests([FromQuery] string? status, [FromQuery] string? priority, [FromQuery] string? location)
+    public async Task<IActionResult> GetRequests([FromQuery] string? status, [FromQuery] string? priority, [FromQuery] string? location, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20)
     {
-        var result = await _replenishmentService.GetRequestsAsync(status, priority, location);
+        pageNumber = Math.Max(1, pageNumber);
+        pageSize = Math.Max(1, Math.Min(100, pageSize));
+
+        var result = await _replenishmentService.GetRequestsAsync(status, priority, location, pageNumber, pageSize);
         return Ok(result);
     }
 

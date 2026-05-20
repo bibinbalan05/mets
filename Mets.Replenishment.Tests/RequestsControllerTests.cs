@@ -224,4 +224,139 @@ public class RequestsControllerTests
         Assert.That(errors!.ContainsKey("Reason"), Is.True);
         Assert.That(errors.ContainsKey("ReviewerName"), Is.True);
     }
+
+    [Test]
+    public async Task GetRequests_ShouldReturnFirstPageWithCorrectSize()
+    {
+        // Arrange
+        for (int i = 1; i <= 25; i++)
+        {
+            _context.Requests.Add(new ReplenishmentRequest { Location = $"Loc {i}", CreatedAt = DateTime.UtcNow.AddMinutes(i) });
+        }
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _controller.GetRequests(null, null, null, pageNumber: 1, pageSize: 10);
+
+        // Assert
+        Assert.That(result, Is.InstanceOf<OkObjectResult>());
+        var okResult = result as OkObjectResult;
+        Assert.That(okResult, Is.Not.Null);
+        var pagedResult = okResult!.Value as PagedResult<ReplenishmentRequest>;
+        Assert.That(pagedResult, Is.Not.Null);
+        Assert.That(pagedResult!.TotalCount, Is.EqualTo(25));
+        Assert.That(pagedResult.Items.Count(), Is.EqualTo(10));
+        Assert.That(pagedResult.PageNumber, Is.EqualTo(1));
+        Assert.That(pagedResult.PageSize, Is.EqualTo(10));
+    }
+
+    [Test]
+    public async Task GetRequests_ShouldReturnCorrectSubsetForSecondPage()
+    {
+        // Arrange
+        var list = new List<ReplenishmentRequest>();
+        var now = DateTime.UtcNow;
+        for (int i = 1; i <= 15; i++)
+        {
+            list.Add(new ReplenishmentRequest { Location = $"Loc {i}", CreatedAt = now.AddMinutes(i) });
+        }
+        _context.Requests.AddRange(list);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _controller.GetRequests(null, null, null, pageNumber: 2, pageSize: 5);
+
+        // Assert
+        Assert.That(result, Is.InstanceOf<OkObjectResult>());
+        var okResult = result as OkObjectResult;
+        var pagedResult = okResult!.Value as PagedResult<ReplenishmentRequest>;
+        Assert.That(pagedResult, Is.Not.Null);
+        Assert.That(pagedResult!.TotalCount, Is.EqualTo(15));
+        
+        var items = pagedResult.Items.ToList();
+        Assert.That(items.Count, Is.EqualTo(5));
+        Assert.That(items[0].Location, Is.EqualTo("Loc 10"));
+        Assert.That(items[4].Location, Is.EqualTo("Loc 6"));
+    }
+
+    [Test]
+    public async Task GetRequests_ShouldFilterByStatus()
+    {
+        // Arrange
+        _context.Requests.Add(new ReplenishmentRequest { Location = "Loc A", Status = RequestStatus.Draft });
+        _context.Requests.Add(new ReplenishmentRequest { Location = "Loc B", Status = RequestStatus.Submitted });
+        _context.Requests.Add(new ReplenishmentRequest { Location = "Loc C", Status = RequestStatus.Draft });
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _controller.GetRequests(status: "Draft", null, null, pageNumber: 1, pageSize: 10);
+
+        // Assert
+        Assert.That(result, Is.InstanceOf<OkObjectResult>());
+        var pagedResult = (result as OkObjectResult)!.Value as PagedResult<ReplenishmentRequest>;
+        Assert.That(pagedResult, Is.Not.Null);
+        Assert.That(pagedResult!.TotalCount, Is.EqualTo(2));
+        Assert.That(pagedResult.Items.All(r => r.Status == RequestStatus.Draft), Is.True);
+    }
+
+    [Test]
+    public async Task GetRequests_ShouldFilterByPriority()
+    {
+        // Arrange
+        _context.Requests.Add(new ReplenishmentRequest { Location = "Loc A", Priority = RequestPriority.Urgent });
+        _context.Requests.Add(new ReplenishmentRequest { Location = "Loc B", Priority = RequestPriority.Normal });
+        _context.Requests.Add(new ReplenishmentRequest { Location = "Loc C", Priority = RequestPriority.Urgent });
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _controller.GetRequests(null, priority: "Urgent", null, pageNumber: 1, pageSize: 10);
+
+        // Assert
+        Assert.That(result, Is.InstanceOf<OkObjectResult>());
+        var pagedResult = (result as OkObjectResult)!.Value as PagedResult<ReplenishmentRequest>;
+        Assert.That(pagedResult, Is.Not.Null);
+        Assert.That(pagedResult!.TotalCount, Is.EqualTo(2));
+        Assert.That(pagedResult.Items.All(r => r.Priority == RequestPriority.Urgent), Is.True);
+    }
+
+    [Test]
+    public async Task GetRequests_ShouldFilterByLocation()
+    {
+        // Arrange
+        _context.Requests.Add(new ReplenishmentRequest { Location = "Warehouse 1" });
+        _context.Requests.Add(new ReplenishmentRequest { Location = "Station 2" });
+        _context.Requests.Add(new ReplenishmentRequest { Location = "Warehouse 3" });
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _controller.GetRequests(null, null, location: "Warehouse", pageNumber: 1, pageSize: 10);
+
+        // Assert
+        Assert.That(result, Is.InstanceOf<OkObjectResult>());
+        var pagedResult = (result as OkObjectResult)!.Value as PagedResult<ReplenishmentRequest>;
+        Assert.That(pagedResult, Is.Not.Null);
+        Assert.That(pagedResult!.TotalCount, Is.EqualTo(2));
+        Assert.That(pagedResult.Items.All(r => r.Location.Contains("Warehouse")), Is.True);
+    }
+
+    [Test]
+    public async Task GetRequests_ShouldReturnEmptyList_WhenPageIsOutOfBounds()
+    {
+        // Arrange
+        for (int i = 1; i <= 5; i++)
+        {
+            _context.Requests.Add(new ReplenishmentRequest { Location = $"Loc {i}" });
+        }
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _controller.GetRequests(null, null, null, pageNumber: 10, pageSize: 5);
+
+        // Assert
+        Assert.That(result, Is.InstanceOf<OkObjectResult>());
+        var pagedResult = (result as OkObjectResult)!.Value as PagedResult<ReplenishmentRequest>;
+        Assert.That(pagedResult, Is.Not.Null);
+        Assert.That(pagedResult!.TotalCount, Is.EqualTo(5));
+        Assert.That(pagedResult.Items, Is.Empty);
+    }
 }
