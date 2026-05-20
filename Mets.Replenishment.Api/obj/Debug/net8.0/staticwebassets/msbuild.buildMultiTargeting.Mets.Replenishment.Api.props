@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="..\build\Mets.Replenishment.Api.props" />
-</Project>

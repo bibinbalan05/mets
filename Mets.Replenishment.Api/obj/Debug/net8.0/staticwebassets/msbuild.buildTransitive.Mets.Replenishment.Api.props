@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="..\buildMultiTargeting\Mets.Replenishment.Api.props" />
-</Project>
